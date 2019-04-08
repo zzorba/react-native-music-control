@@ -115,6 +115,8 @@ RCT_EXPORT_METHOD(resetNowPlaying)
     self.artworkUrl = nil;
 }
 
+
+
 RCT_EXPORT_METHOD(enableControl:(NSString *) controlName enabled:(BOOL) enabled options:(NSDictionary *)options)
 {
     MPRemoteCommandCenter *remoteCenter = [MPRemoteCommandCenter sharedCommandCenter];
@@ -148,6 +150,10 @@ RCT_EXPORT_METHOD(enableControl:(NSString *) controlName enabled:(BOOL) enabled 
     } else if ([controlName isEqual: @"seekForward"]) {
         [self toggleHandler:remoteCenter.seekForwardCommand withSelector:@selector(onSeekForward:) enabled:enabled];
 
+    } else if ([controlName isEqual: @"seek"]) {
+        if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_9_0) {
+            [self toggleHandler:remoteCenter.changePlaybackPositionCommand withSelector:@selector(onSeek:) enabled:enabled];
+        }
     } else if ([controlName isEqual: @"seekBackward"]) {
         [self toggleHandler:remoteCenter.seekBackwardCommand withSelector:@selector(onSeekBackward:) enabled:enabled];
     } else if ([controlName isEqual:@"skipBackward"]) {
@@ -243,6 +249,9 @@ RCT_EXPORT_METHOD(observeAudioInterruptions:(BOOL) observe){
     [self toggleHandler:remoteCenter.disableLanguageOptionCommand withSelector:@selector(onDisableLanguageOption:) enabled:false];
     [self toggleHandler:remoteCenter.nextTrackCommand withSelector:@selector(onNextTrack:) enabled:false];
     [self toggleHandler:remoteCenter.previousTrackCommand withSelector:@selector(onPreviousTrack:) enabled:false];
+    if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_9_0) {
+        [self toggleHandler:remoteCenter.changePlaybackPositionCommand withSelector:@selector(onSeek:) enabled:false];
+    }
     [self toggleHandler:remoteCenter.seekForwardCommand withSelector:@selector(onSeekForward:) enabled:false];
     [self toggleHandler:remoteCenter.seekBackwardCommand withSelector:@selector(onSeekBackward:) enabled:false];
     [self toggleHandler:remoteCenter.skipBackwardCommand withSelector:@selector(onSkipBackward:) enabled:false];
@@ -262,6 +271,7 @@ RCT_EXPORT_METHOD(observeAudioInterruptions:(BOOL) observe){
 - (void)onPreviousTrack:(MPRemoteCommandEvent*)event { [self sendEvent:@"previousTrack"]; }
 - (void)onSeekForward:(MPRemoteCommandEvent*)event { [self sendEvent:@"seekForward"]; }
 - (void)onSeekBackward:(MPRemoteCommandEvent*)event { [self sendEvent:@"seekBackward"]; }
+- (void)onSeek:(MPRemoteCommandEvent*)event { [self sendEventWithValue:@"seek" withValue:[NSString stringWithFormat:@"%.15f", event.positionTime]]; }
 - (void)onSkipBackward:(MPRemoteCommandEvent*)event { [self sendEvent:@"skipBackward"]; }
 - (void)onSkipForward:(MPRemoteCommandEvent*)event { [self sendEvent:@"skipForward"]; }
 
